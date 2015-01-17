@@ -19,6 +19,7 @@ require './planets.rb'
 
 def simulateOneStep(delta_t)
   orbitals = $orbitals.inject({}){|res, (name, orbital)| res[name]=planetHelioEquatorialOn(orbital, name, delta_t); res[name][:size]=orbital[:size]; res }
+
 end
 
 ################## drawing ############################
@@ -63,7 +64,7 @@ def drawNewState(window,state)
   Gl.glViewport(0, 0, w, h)
   glClearColor(0.0,0.0,0.0,0.0)
   
-  #glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   state.each do |name, pos|
     #puts "#{name} "
@@ -73,14 +74,31 @@ def drawNewState(window,state)
   end
 end
 
-@frustum = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-
+HOME = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+@frustum = HOME
+@rotated=false
 def cameraRotate(dir)
   case dir
-  when :home
-    
+  when :reset
+    glPopMatrix if @rotated
+    @rotated=false
+  when :up
+    glPushMatrix if not @rotated
+    @rotated = true
+    glRotatef(1, 0.0,50.0,0.0,)
+  when :down
+    glPushMatrix if not @rotated
+    @rotated = true
+    glRotatef(-1, 0.0,50.0,0.0,)
+  when :left
+    glPushMatrix if not @rotated
+    @rotated = true
+    glRotatef(1, 0.0,0.0,50.0,)
+  when :right
+    glPushMatrix if not @rotated
+    @rotated = true
+    glRotatef(-1, 0.0,0.0,50.0,)
   end
-    #gluLookAt(*@frustum)
 end
 
 def reshape(window, width, height)

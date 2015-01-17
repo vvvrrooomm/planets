@@ -14,10 +14,11 @@ include Gl
 include Glu
 include Glut
 
-require './planets.rb'
+require_relative 'planets'
+require_relative 'assets'
 
 class Renderer
-#  include Assets
+  include Assets
   
   @drawPath
   @simulator

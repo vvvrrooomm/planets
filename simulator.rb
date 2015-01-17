@@ -100,6 +100,7 @@ class RENDERER
   HOME = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
   @@frustum = HOME
   @rotated=false
+
   def cameraRotate(dir)
     case dir
     when :reset
@@ -121,6 +122,8 @@ class RENDERER
       glPushMatrix if not @rotated
       @rotated = true
       glRotatef(-1, 0.0,0.0,50.0,)
+    else
+      puts "unknown rotation #{dir}"
     end
   end
 
@@ -171,9 +174,9 @@ class RENDERER
       when Glfw::KEY_UP
         cameraRotate(:up)
       when Glfw::KEY_DOWN
-        cameraRotate(:DOWN)
+        cameraRotate(:down)
       when Glfw::KEY_LEFT
-        cameraRotate(:LEFT)
+        cameraRotate(:left)
       when Glfw::KEY_RIGHT
         cameraRotate(:right)
       when  Glfw::KEY_KP_ADD, Glfw::KEY_RIGHT_BRACKET

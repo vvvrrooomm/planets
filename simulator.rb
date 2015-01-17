@@ -211,12 +211,36 @@ class Renderer
     end
   end
 
+  def loadTexture(id,name)
+    ChunkyPNG::Image.from_file('data/'+TEXTURES[name])
+  end
+  
+  def initTextures
+    puts "max textures: #{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS}"
+    planets = Planets.getPlanetList
+    planets.each_with_index do |name,texture_id|
+      print "loading texture #{name} .."
+      image = loadTexture(texture_id, name)
+      print " upload .."
+      glBindTexture(GL_TEXTURE_2D,texture_id)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.to_rgba_stream)
+      puts " done"
+    end
+  end
+  
   def initialize
     Glfw.init
     glutInit
 
     window = Glfw::Window.new(800, 600, "Planets")
     keyQueue = []# Queue.new
+
+    initTextures
     
     # Set some callbacks
     window.set_key_callback do |window, key, code, action, mods|

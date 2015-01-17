@@ -138,7 +138,7 @@ class RENDERER
     Gl.glLoadIdentity()
     gluLookAt(*@@frustum)
 
-    ambient = [ 0.0, 0.0, 0.0, 1.0 ]
+    ambient = [ 0.5, 0.5, 0.5, 1.0 ]
     diffuse = [ 1.0, 1.0, 1.0, 1.0 ]
     position = [ 0.0, 0.0, 50.0, 0.0 ]
     lmodel_ambient = [ 0.4, 0.4, 0.4, 1.0 ]
@@ -156,7 +156,6 @@ class RENDERER
     glEnable(GL_LIGHTING)
     glEnable(GL_LIGHT0)
 
-    glClearColor(0.0, 0.1, 0.1, 0.0)
     glClearColor(0.0,0.0,0.0,0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   end

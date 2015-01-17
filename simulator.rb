@@ -22,7 +22,7 @@ class Renderer
   
   @drawPath
   @simulator
-  
+  @planets
   ################ simulator ###########################
   def simulateOneStep(delta_t)
     state={}
@@ -49,8 +49,12 @@ class Renderer
       neptune: [ 1.0, 0.50, 1.0, 1.0],
     }
 
+  HOME = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+  @@frustum = HOME
+  @rotated=false
+
   
-  def drawSphere(pos_x, pos_y, pos_z, color, size)
+  def drawSphere(pos_x, pos_y, pos_z, name, size)
     no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
     mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
     mat_ambient_color = [ 0.8, 0.8, 0.2, 1.0 ]
@@ -60,14 +64,17 @@ class Renderer
     low_shininess = [ 5.0 ]
     high_shininess = [ 100.0 ]
     mat_emission = [0.3, 0.2, 0.2, 0.0]
+
+    glBindTexture( GL_TEXTURE_2D, @planets[name])
+    glMatrixMode(GL_MODELVIEW)
     
     glPushMatrix()
     glTranslate(pos_x, pos_y, 0)
-    glMaterial(GL_FRONT, GL_AMBIENT, @@colors[color])
-    glMaterial(GL_FRONT, GL_DIFFUSE, mat_diffuse)
-    glMaterial(GL_FRONT, GL_SPECULAR, mat_specular)
-    glMaterial(GL_FRONT, GL_SHININESS, high_shininess)
-    glMaterial(GL_FRONT, GL_EMISSION, no_mat)
+    #glMaterial(GL_FRONT, GL_AMBIENT, @@colors[name])
+    #glMaterial(GL_FRONT, GL_DIFFUSE, mat_diffuse)
+    #glMaterial(GL_FRONT, GL_SPECULAR, mat_specular)
+    #glMaterial(GL_FRONT, GL_SHININESS, high_shininess)
+    #glMaterial(GL_FRONT, GL_EMISSION, no_mat)
     glutSolidSphere(1, 106, 106)
     glPopMatrix()
   end
@@ -99,10 +106,6 @@ class Renderer
       end
     end
   end
-
-  HOME = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-  @@frustum = HOME
-  @rotated=false
 
   def cameraRotate(dir)
     case dir
@@ -211,18 +214,21 @@ class Renderer
     end
   end
 
-  def loadTexture(id,name)
+  def loadTexture(name)
     ChunkyPNG::Image.from_file('data/'+TEXTURES[name])
   end
   
   def initTextures
+    @planets = {}
     puts "max textures: #{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS}"
     planets = Planets.getPlanetList
-    planets.each_with_index do |name,texture_id|
-      print "loading texture #{name} .."
-      image = loadTexture(texture_id, name)
+    textureIds = glGenTextures(planets.length)
+    planets.each do |name|
+      @planets[name] = textureIds.shift
+      print "loading texture #{name}, id #{@planets[name]} .."
+      image = loadTexture(name)
       print " upload .."
-      glBindTexture(GL_TEXTURE_2D,texture_id)
+      glBindTexture(GL_TEXTURE_2D, @planets[name])
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -231,6 +237,8 @@ class Renderer
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.to_rgba_stream)
       puts " done"
     end
+
+    glEnable (GL_TEXTURE_2D) 
   end
   
   def initialize
@@ -239,8 +247,6 @@ class Renderer
 
     window = Glfw::Window.new(800, 600, "Planets")
     keyQueue = []# Queue.new
-
-    initTextures
     
     # Set some callbacks
     window.set_key_callback do |window, key, code, action, mods|
@@ -255,6 +261,9 @@ class Renderer
     simulatorInit
     
     window.make_context_current
+
+    initTextures
+
     reshape(window, window.size[0], window.size[1])
 
     eventLoop(window, keyQueue)

@@ -23,6 +23,8 @@ class Renderer
   @drawPath
   @simulator
   @planets
+
+  
   ################ simulator ###########################
   def simulateOneStep(delta_t)
     state={}
@@ -49,11 +51,9 @@ class Renderer
       neptune: [ 1.0, 0.50, 1.0, 1.0],
     }
 
-  HOME = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-  @@frustum = HOME
-  @rotated=false
+  HOME = [0.0, 0.0, -50.0]
+  Nullvector = [0.0, 0.0, 0.0]
 
-  
   def drawSphere(pos, name)
     no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
     mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
@@ -70,11 +70,7 @@ class Renderer
     
     glPushMatrix()
     glTranslate(pos[:x], pos[:y], pos[:z])
-    #glMaterial(GL_FRONT, GL_AMBIENT, @@colors[name])
-    #glMaterial(GL_FRONT, GL_DIFFUSE, mat_diffuse)
-    #glMaterial(GL_FRONT, GL_SPECULAR, mat_specular)
-    #glMaterial(GL_FRONT, GL_SHININESS, high_shininess)
-    #glMaterial(GL_FRONT, GL_EMISSION, no_mat)
+    #gl_Position = projection * camera * model * vec4(vert, 1);# evaluate from RtoL
     glutSolidSphere(pos[:size]/50000.to_f, 106, 106)
     glPopMatrix()
   end
@@ -93,10 +89,18 @@ class Renderer
   def drawNewState(window,state)
     w, h = window.framebuffer_size()
     Gl.glViewport(0, 0, w, h)
-
     glClearColor(0.0,0.0,0.0,0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    glPushMatrix
+    glLoadIdentity()
+#camera matrix
+    glTranslate(*@cameraTrans)
+    glRotatef(-@cameraRot[2], 0.0, 0.0, 1.0)
+    glRotatef(-@cameraRot[1], 0.0, 1.0, 0.0)
+    glRotatef(-@cameraRot[0], 1.0, 0.0, 0.0)
+
+#object matrix done in render function
     state.each do |name, data|
       case name
       when :orbitals
@@ -105,34 +109,30 @@ class Renderer
         data.each{|el| drawPath(el)}
       end
     end
+    glPopMatrix
   end
-
+  
   def cameraRotate(dir)
     case dir
     when :reset
-      glPopMatrix if @rotated
-      @rotated=false
+      @cameraRot.replace Nullvector
+      @cameraTrans.replace HOME
     when :up
-      glPushMatrix if not @rotated
-      @rotated = true
-      glRotatef(1, 0.0,50.0,0.0,)
+      @cameraRot[0]+=1
+      @cameraRot[0] = 0 if @cameraRot[0] > 360
     when :down
-      glPushMatrix if not @rotated
-      @rotated = true
-      glRotatef(-1, 0.0,50.0,0.0,)
+      @cameraRot[0]-=1
+      @cameraRot[0] = 360 if @cameraRot[0] < 0
     when :left
-      glPushMatrix if not @rotated
-      @rotated = true
-      glRotatef(1, 0.0,0.0,50.0,)
+      @cameraRot[1]+=1
+      @cameraRot[1] = 0 if @cameraRot[1] > 360
     when :right
-      glPushMatrix if not @rotated
-      @rotated = true
-      glRotatef(-1, 0.0,0.0,50.0,)
+      @cameraRot[1]-=1
+      @cameraRot[1] = 360 if @cameraRot[1] < 0
     when :zoomIn
-      glTranslatef(1.0, 0.0, 0.0)
+      @cameraTrans[2] += 1
     when :zoomOut
-      glTranslatef(-1.0, 0.0, 0.0)
-      
+      @cameraTrans[2] -= 1
     else
       puts "unknown rotation #{dir}"
     end
@@ -143,14 +143,10 @@ class Renderer
 
     glShadeModel(GL_FLAT)
 
-    Gl.glViewport(0, 0, w, h)
-    Gl.glMatrixMode(GL_PROJECTION)
-    Gl.glLoadIdentity()
-
+    glViewport(0, 0, w, h)
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
     gluPerspective(60.0,  width.to_f/height.to_f, 1.0, 100.0)
-    Gl.glMatrixMode(GL_MODELVIEW )
-    Gl.glLoadIdentity()
-    gluLookAt(*@@frustum)
 
     ambient = [ 0.5, 0.5, 0.5, 1.0 ]
     diffuse = [ 1.0, 1.0, 1.0, 1.0 ]
@@ -172,6 +168,8 @@ class Renderer
 
     glClearColor(0.0,0.0,0.0,0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW )
   end
 
   ################# system stuff #################################
@@ -251,8 +249,8 @@ class Renderer
     glutInit
 
     window = Glfw::Window.new(800, 600, "Planets")
-    keyQueue = []# Queue.new
-    
+    keyQueue = []
+
     # Set some callbacks
     window.set_key_callback do |window, key, code, action, mods|
       window.should_close = true if key == Glfw::KEY_ESCAPE
@@ -264,7 +262,11 @@ class Renderer
     end
 
     simulatorInit
-    
+
+    @cameraRot = []
+    @cameraRot.replace Nullvector
+    @cameraTrans = []
+    @cameraTrans.replace HOME
     window.make_context_current
 
     initTextures

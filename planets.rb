@@ -279,6 +279,10 @@ public
     return orbitals
   end
 
-
+  def self.getPlanetList
+    list=[]
+    @@orbitals.keys.each_with_index{|k,i| list[i]=k}
+    return list
+  end
   #http://www.stjarnhimlen.se/comp/ppcomp.html
 end

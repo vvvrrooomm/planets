@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'glfw3'
 require 'opengl'
 require 'thread'
+require 'oily_png'
 
 require 'gl'
 require 'glu'

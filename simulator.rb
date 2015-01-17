@@ -71,7 +71,7 @@ class RENDERER
 
   def drawPath(path)
     color = @@colors[path[0]]
-    glBegin GL_LINE_LOOP
+    glBegin GL_LINES
     glColor4f(*color)
     path[1].each do |point|
       glVertex3f(*point)

@@ -75,7 +75,7 @@ class Renderer
     #glMaterial(GL_FRONT, GL_SPECULAR, mat_specular)
     #glMaterial(GL_FRONT, GL_SHININESS, high_shininess)
     #glMaterial(GL_FRONT, GL_EMISSION, no_mat)
-    glutSolidSphere(1, 106, 106)
+    glutSolidSphere(pos[:size]/50000.to_f, 106, 106)
     glPopMatrix()
   end
 
@@ -128,6 +128,11 @@ class Renderer
       glPushMatrix if not @rotated
       @rotated = true
       glRotatef(-1, 0.0,0.0,50.0,)
+    when :zoomIn
+      glTranslatef(1.0, 0.0, 0.0)
+    when :zoomOut
+      glTranslatef(-1.0, 0.0, 0.0)
+      
     else
       puts "unknown rotation #{dir}"
     end

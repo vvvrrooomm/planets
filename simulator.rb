@@ -54,7 +54,7 @@ class Renderer
   @rotated=false
 
   
-  def drawSphere(pos_x, pos_y, pos_z, name, size)
+  def drawSphere(pos, name)
     no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
     mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
     mat_ambient_color = [ 0.8, 0.8, 0.2, 1.0 ]
@@ -69,7 +69,7 @@ class Renderer
     glMatrixMode(GL_MODELVIEW)
     
     glPushMatrix()
-    glTranslate(pos_x, pos_y, 0)
+    glTranslate(pos[:x], pos[:y], pos[:z])
     #glMaterial(GL_FRONT, GL_AMBIENT, @@colors[name])
     #glMaterial(GL_FRONT, GL_DIFFUSE, mat_diffuse)
     #glMaterial(GL_FRONT, GL_SPECULAR, mat_specular)
@@ -100,7 +100,7 @@ class Renderer
     state.each do |name, data|
       case name
       when :orbitals
-        data.each{|name,pos| drawSphere(pos[:xh],pos[:yh],pos[:zh], name, pos[:size]) }
+        data.each{|name,pos| drawSphere(pos, name) }
       when :paths
         data.each{|el| drawPath(el)}
       end

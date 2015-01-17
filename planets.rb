@@ -19,7 +19,7 @@ private
       m2: 0.9856002585,
       oblecl1: 23.4393,
       oblecl2: "3.563E-7".to_f,
-      size: 696342,
+      size: 69634, #size: 696342,
     },
     :mercury => {
       n1:  48.3313,
@@ -186,11 +186,11 @@ private
   end
 
   def calcEclipticPos(orbital, distAnom)
-    orbital[:xh] = distAnom[:r] * ( Math::cos(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) - Math::sin(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
-    orbital[:yh] = distAnom[:r] * ( Math::sin(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) + Math::cos(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
-    orbital[:zh] = distAnom[:r] * ( Math::sin(distAnom[:v]+orbital[:w]) * Math::sin(orbital[:i]) )
-    orbital[:lon] = Math::atan2( orbital[:yh], orbital[:xh] )
-    orbital[:lat] = Math::atan2( orbital[:zh], Math::sqrt(orbital[:xh]*orbital[:xh]+orbital[:yh]*orbital[:yh]) )
+    orbital[:x] = distAnom[:r] * ( Math::cos(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) - Math::sin(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
+    orbital[:y] = distAnom[:r] * ( Math::sin(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) + Math::cos(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
+    orbital[:z] = distAnom[:r] * ( Math::sin(distAnom[:v]+orbital[:w]) * Math::sin(orbital[:i]) )
+    orbital[:lon] = Math::atan2( orbital[:y], orbital[:x] )
+    orbital[:lat] = Math::atan2( orbital[:z], Math::sqrt(orbital[:x]*orbital[:x]+orbital[:y]*orbital[:y]) )
     return orbital
   end
 
@@ -199,9 +199,9 @@ private
   end
 
   def convertLatLonToXYZ(orbital, distAnom)
-    orbital[:xh] = distAnom[:r] * Math::cos(orbital[:lon]) * Math::cos(orbital[:lat])
-    orbital[:yh] = distAnom[:r] * Math::sin(orbital[:lon]) * Math::cos(orbital[:lat])
-    orbital[:zh] = distAnom[:r] * Math::sin(orbital[:lat])
+    orbital[:x] = distAnom[:r] * Math::cos(orbital[:lon]) * Math::cos(orbital[:lat])
+    orbital[:y] = distAnom[:r] * Math::sin(orbital[:lon]) * Math::cos(orbital[:lat])
+    orbital[:z] = distAnom[:r] * Math::sin(orbital[:lat])
 
     return orbital
   end
@@ -263,9 +263,9 @@ public
     pos = planetHelioEclipticOn(orbital, name, day)
     ecl = 23.4393 - "3.563E-7".to_f * day
     
-    pos[:xh] = pos[:xh]
-    pos[:yh] = pos[:yh] * Math::cos(ecl) - pos[:zh] * Math::sin(ecl)
-    pos[:zh] = pos[:yh] * Math::sin(ecl) + pos[:zh] * Math::cos(ecl)
+    pos[:x] = pos[:x]
+    pos[:y] = pos[:y] * Math::cos(ecl) - pos[:z] * Math::sin(ecl)
+    pos[:z] = pos[:y] * Math::sin(ecl) + pos[:z] * Math::cos(ecl)
     return pos
   end
 
@@ -275,7 +275,7 @@ public
   
   def simulateOneStep(delta_t)
     orbitals = @@orbitals.inject({}){|res, (name, orbital)| res[name]=planetHelioEquatorialOn(orbital, name, delta_t); res[name][:size]=orbital[:size]; res }
-    orbitals.map.with_index{|(name,orbital), i| @path[name].push( [orbital[:xh],orbital[:yh],orbital[:zh]] ) }
+    orbitals.map.with_index{|(name,orbital), i| @path[name].push( [orbital[:x],orbital[:y],orbital[:z]] ) }
     return orbitals
   end
 

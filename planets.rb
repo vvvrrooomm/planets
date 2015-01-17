@@ -1,4 +1,4 @@
-class PLANETS
+class Planets
 private
   refd = -3543.0
   refDate = "19 april 1990"

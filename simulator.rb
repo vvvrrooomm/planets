@@ -16,7 +16,8 @@ include Glut
 
 require './planets.rb'
 
-class RENDERER
+class Renderer
+#  include Assets
   
   @drawPath
   @simulator
@@ -31,7 +32,7 @@ class RENDERER
   end
 
   def simulatorInit
-    @simulator = PLANETS.new
+    @simulator = Planets.new
     @drawPath = true
   end
   ################## drawing ############################
@@ -240,6 +241,6 @@ class RENDERER
 end
 
 if $0 == __FILE__
-  manager = RENDERER.new
+  manager = Renderer.new
 
 end

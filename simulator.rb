@@ -2,6 +2,7 @@ require 'rubygems'
 require 'bundler/setup'
 require 'glfw3'
 require 'opengl'
+require 'thread'
 
 require 'gl'
 require 'glu'
@@ -14,73 +15,13 @@ include Glut
 
 require './planets.rb'
 
+################ simulator ###########################
+
 def simulateOneStep(delta_t)
   orbitals = $orbitals.inject({}){|res, (name, orbital)| res[name]=planetHelioEquatorialOn(orbital, name, delta_t); res[name][:size]=orbital[:size]; res }
 end
 
-def drawTriangle(pos_x,pos_y,pos_z, color)
-  colors =  {
-    sun:    [[1,0,0], [1, 0, 0], [1, 0.5, 0.5], [1, 0.8, 0.8], [0.5, 0, 0], [0.3, 0, 0], [0.0, 1.0, 0.0 ]],
-    mercury:   [[0,1,0], [0, 1, 0], [0.5, 1, 0.5], [0.8, 1, 0.8], [0, 0.5, 0], [0, 0.3, 0], [0.0, 0.0, 1.0 ]],
-    venus:  [[0,0,1], [0, 0, 1], [0.5, 0.5, 1], [0.8, 0.8, 1], [0, 0, 0.5], [0, 0, 0.3], [1.0, 0.0, 0.0 ]],
-    mars: [[0,1,1], [0, 1, 1], [0.5, 1.5, 1], [0.8, 1.8, 1], [0, 0.5, 0.5], [0, 0.3, 0.3], [1.0, 0.0, 0.0 ]],
-
-    jupiter:   [[0,1,0], [0, 1, 0], [0.5, 1, 0.5], [0.8, 1, 0.8], [0, 0.5, 0], [0, 0.3, 0], [0.0, 0.0, 1.0 ]],
-    saturn:  [[0,0,1], [0, 0, 1], [0.5, 0.5, 1], [0.8, 0.8, 1], [0, 0, 0.5], [0, 0, 0.3], [1.0, 0.0, 0.0 ]],
-    uranus: [[0,1,1], [0, 1, 1], [0.5, 1.5, 1], [0.8, 1.8, 1], [0, 0.5, 0.5], [0, 0.3, 0.3], [1.0, 0.0, 0.0 ]],
-    neptune: [[0,1,1], [0, 1, 1], [0.5, 1.5, 1], [0.8, 1.8, 1], [0, 0.5, 0.5], [0, 0.3, 0.3], [1.0, 0.0, 0.0 ]],
-  }
-  puts "color: #{color}"
-  glPushMatrix
-  glTranslatef(pos_x, pos_y, 0)
-  glBegin GL_QUADS
-  glColor3f(*colors[color][0])
-  glVertex2f(-5, 5)
-  glVertex2f(-5, -5)
-  glVertex2f(-7.5, -5)
-  glVertex2f(-7.5, 5)
-  glColor3f(*colors[color][1])
-  glVertex2f(5, 5)
-  glVertex2f(5, -5)
-  glVertex2f(-5, -5)
-  glVertex2f(-5, 5)
-  glColor3f(*colors[color][2])
-  glVertex2f(5, 5)
-  glVertex2f(5, -5)
-  glVertex2f(7.5, -5)
-  glVertex2f(7.5, 5)
-  glColor3f(*colors[color][3])
-  glVertex2f(5, 7.5)
-  glVertex2f(5, 5)
-  glVertex2f(-5, 5)
-  glVertex2f(-5, 7.5)
-  glColor3f(*colors[color][4])
-  glVertex2f(5, -7.5)
-  glVertex2f(5, -5)
-  glVertex2f(-5, -5)
-  glVertex2f(-5, -7.5)
-  glEnd
-  glBegin GL_TRIANGLES
-  glColor3f(*colors[color][4])
-  glVertex2f(-5, 7.5)
-  glVertex2f(-5, 5)
-  glVertex2f(-7.5, 5)
-  glColor3f(*colors[color][0])
-  glVertex2f(5, 7.5)
-  glVertex2f(5, 5)
-  glVertex2f(7.5, 5)
-  glColor3f(*colors[color][5])
-  glVertex2f(-5, -7.5)
-  glVertex2f(-5, -5)
-  glVertex2f(-7.5, -5)
-  glColor3f(*colors[color][4])
-  glVertex2f(5, -7.5)
-  glVertex2f(5, -5)
-  glVertex2f(7.5, -5)
-  glEnd
-  glPopMatrix
-  glColor3f( *colors[color][6]);
-end
+################## drawing ############################
 
 def drawSphere(pos_x, pos_y, pos_z, color, size)
   no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
@@ -132,6 +73,16 @@ def drawNewState(window,state)
   end
 end
 
+@frustum = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+
+def cameraRotate(dir)
+  case dir
+  when :home
+    
+  end
+    #gluLookAt(*@frustum)
+end
+
 def reshape(window, width, height)
   w, h = window.framebuffer_size()
 
@@ -144,7 +95,7 @@ def reshape(window, width, height)
   gluPerspective(60.0,  width.to_f/height.to_f, 1.0, 100.0)
   Gl.glMatrixMode(GL_MODELVIEW )
   Gl.glLoadIdentity()
-  gluLookAt(0, 0.0, 50.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+  gluLookAt(*@frustum)
 
   ambient = [ 0.0, 0.0, 0.0, 1.0 ]
   diffuse = [ 1.0, 1.0, 1.0, 1.0 ]
@@ -169,37 +120,69 @@ def reshape(window, width, height)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 end
 
+################# system stuff #################################
+
+def handleKeys(keyQueue)
+  while not keyQueue.empty?
+    key = keyQueue.shift
+    case  key
+    when Glfw::KEY_HOME
+      cameraRotate(:reset)
+    when Glfw::KEY_UP
+      cameraRotate(:up)
+    when Glfw::KEY_DOWN
+      cameraRotate(:DOWN)
+    when Glfw::KEY_LEFT
+      cameraRotate(:LEFT)
+    when Glfw::KEY_RIGHT
+      cameraRotate(:right)
+    when  Glfw::KEY_KP_ADD, Glfw::KEY_RIGHT_BRACKET
+      cameraRotate(:zoomIn)
+    when Glfw::KEY_MINUS, Glfw::KEY_SLASH, Glfw::KEY_KP_SUBTRACT
+      cameraRotate(:zoomOut)
+    when Glfw::KEY_ESCAPE
+    else
+      puts "unknown key pressed #{key}"
+    end
+  end
+end
+
+
+def eventLoop(window, keyQueue)
+  delta_t=1
+  loop do
+    Glfw.poll_events
+    handleKeys(keyQueue)
+    state = simulateOneStep(delta_t)
+    drawNewState(window, state)
+
+    delta_t += 1
+    window.swap_buffers
+    break if window.should_close?
+  end
+end
 
 def main
-  # Initialize GLFW 3
   Glfw.init
   glutInit
-  # Create a window
-  window = Glfw::Window.new(800, 600, "Foobar")
 
+  window = Glfw::Window.new(800, 600, "Planets")
+  keyQueue = []# Queue.new
+  
   # Set some callbacks
   window.set_key_callback do |window, key, code, action, mods|
     window.should_close = true if key == Glfw::KEY_ESCAPE
+    keyQueue.push(key) if action == Glfw::REPEAT or action == Glfw::PRESS
   end
 
   window.set_close_callback do |window|
     window.should_close = true
   end
 
-  # Make the window's context current
   window.make_context_current
   reshape(window, window.size[0], window.size[1])
-  
-  delta_t=1
-  loop do
-    Glfw.poll_events
-    state = simulateOneStep(delta_t)
-    drawNewState(window, state)
-    delta_t += 1
 
-    window.swap_buffers
-    break if window.should_close?
-  end
+  eventLoop(window, keyQueue)
 
   # Explicitly destroy the window when done with it.
   window.destroy

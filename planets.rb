@@ -181,76 +181,82 @@ def calcDistanceAnomaly(orbital,ecentricAnomaly)
 end
 
 def calcEclipticPos(orbital, distAnom)
-  xh = distAnom[:r] * ( Math::cos(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) - Math::sin(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
-  yh = distAnom[:r] * ( Math::sin(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) + Math::cos(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
-  zh = distAnom[:r] * ( Math::sin(distAnom[:v]+orbital[:w]) * Math::sin(orbital[:i]) )
-  lonecl = Math::atan2( yh, xh )
-  latecl = Math::atan2( zh, Math::sqrt(xh*xh+yh*yh) )
-  return {xh: xh, yh: yh, zh: zh, lon: lonecl, lat: latecl}
+  orbital[:xh] = distAnom[:r] * ( Math::cos(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) - Math::sin(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
+  orbital[:yh] = distAnom[:r] * ( Math::sin(orbital[:n]) * Math::cos(distAnom[:v]+orbital[:w]) + Math::cos(orbital[:n]) * Math::sin(distAnom[:v]+orbital[:w]) * Math::cos(orbital[:i]) )
+  orbital[:zh] = distAnom[:r] * ( Math::sin(distAnom[:v]+orbital[:w]) * Math::sin(orbital[:i]) )
+  orbital[:lon] = Math::atan2( orbital[:yh], orbital[:xh] )
+  orbital[:lat] = Math::atan2( orbital[:zh], Math::sqrt(orbital[:xh]*orbital[:xh]+orbital[:yh]*orbital[:yh]) )
+  return orbital
 end
 
 def getPrecessionCorrection(epoch, d)
   lon_corr =  precessionFactor * ( 365.2422 * ( epoch - 2000.0 ) - d )
 end
 
-def convertLatLonToXYZ(orbital)
-  orbital[:xh] = r * Math::cos(orbital[:lon]) * Math::cos(sorbital[:lat])
-  orbital[:yh] = r * Math::sin(orbital[:lon]) * Math::cos(orbital[:lat])
-  orbital[:zh] = r * Math::sin(orbital[:lat])
+def convertLatLonToXYZ(orbital, distAnom)
+  orbital[:xh] = distAnom[:r] * Math::cos(orbital[:lon]) * Math::cos(orbital[:lat])
+  orbital[:yh] = distAnom[:r] * Math::sin(orbital[:lon]) * Math::cos(orbital[:lat])
+  orbital[:zh] = distAnom[:r] * Math::sin(orbital[:lat])
+
   return orbital
 end
 
-def correctPertuberations(orbitals, day)
+def correctPertuberations(orbital, name, day, distAnom)
   mj = adjustByDate($orbitals[:jupiter], day)[:m]
   ms = adjustByDate($orbitals[:saturn], day)[:m]
   mu = adjustByDate($orbitals[:uranus], day)[:m]
 
-  orbitals[:jupiter][:lon] += 0
-  -0.332 * Math::sin(2*mj - 5*ms - 67.6)
-  -0.056 * Math::sin(2*mj - 2*ms + 21)
-  +0.042 * Math::sin(3*mj - 5*ms + 21)
-  -0.036 * Math::sin(mj - 2*ms)
-  +0.022 * Math::cos(mj - ms)
-  +0.023 * Math::sin(2*mj - 3*ms + 52)
-  -0.016 * Math::sin(mj - 5*ms - 69)
+  case name 
+  when :jupiter
+    orbital[:lon] += 0
+    -0.332 * Math::sin(2*mj - 5*ms - 67.6)
+    -0.056 * Math::sin(2*mj - 2*ms + 21)
+    +0.042 * Math::sin(3*mj - 5*ms + 21)
+    -0.036 * Math::sin(mj - 2*ms)
+    +0.022 * Math::cos(mj - ms)
+    +0.023 * Math::sin(2*mj - 3*ms + 52)
+    -0.016 * Math::sin(mj - 5*ms - 69)
+      orbital = convertLatLonToXYZ(orbital, distAnom)
+  when :saturn
+    orbital[:lon] += 0
+    +0.812 * Math::sin(2*mj - 5*ms - 67.6)
+    -0.229 * Math::cos(2*mj - 4*ms - 2)
+    +0.119 * Math::sin(mj - 2*ms - 3)
+    +0.046 * Math::sin(2*mj - 6*ms - 69)
+    +0.014 * Math::sin(mj - 3*ms + 32)
 
-  orbitals[:saturn][:lon] += 0
-  +0.812 * Math::sin(2*mj - 5*ms - 67.6)
-  -0.229 * Math::cos(2*mj - 4*ms - 2)
-  +0.119 * Math::sin(mj - 2*ms - 3)
-  +0.046 * Math::sin(2*mj - 6*ms - 69)
-  +0.014 * Math::sin(mj - 3*ms + 32)
-
-  orbitals[:saturn][:lat] += 0
-  -0.020 * Math::cos(2*mj - 4*ms - 2)
-  +0.018 * Math::sin(2*mj - 6*ms - 49)
-
-  orbitals[:uranus][:lon] += 0
-  +0.040 * Math::sin(ms - 2*mu + 6)
-  +0.035 * Math::sin(ms - 3*mu + 33)
-  -0.015 * Math::sin(mj - mu + 20)
-
-  orbitals[:uranus] = convertLatLonToXYZ(orbitals[:uranus])
-  orbitals[:saturn] = convertLatLonToXYZ(orbitals[:saturn])
-  orbitals[:jupiter] = convertLatLonToXYZ(orbitals[:jupiter])
+    orbital[:lat] += 0
+    -0.020 * Math::cos(2*mj - 4*ms - 2)
+    +0.018 * Math::sin(2*mj - 6*ms - 49)
+      orbital = convertLatLonToXYZ(orbital, distAnom)
+  when :uranus
+    orbital[:lon] += 0
+    +0.040 * Math::sin(ms - 2*mu + 6)
+    +0.035 * Math::sin(ms - 3*mu + 33)
+    -0.015 * Math::sin(mj - mu + 20)
+    orbital = convertLatLonToXYZ(orbital, distAnom)
+  end
   
-  return orbitals
+  return orbital
 end
   
 def planetHelioEclipticOn(orbital, name, day)
   adjusted = adjustByDate(orbital, day)
   ecentricAnomaly = calcEcentricAnomaly(adjusted)
   distAnom = calcDistanceAnomaly(adjusted, ecentricAnomaly)
-  eclPos = calcEclipticPos(adjusted, distAnom)
-  correctPertuberations(orbital, name, day, distAnom
+  eclipticPos = calcEclipticPos(adjusted, distAnom)
+  pertuberatedPos = correctPertuberations(eclipticPos, name, day, distAnom)
   #precession
   #eclPos[:lon] += getPrecessionCorrection(epoch, day)
   #eclPos[:lat] += getPrecessionCorrection(epoch, day) unless isMoon
+ 
+  return pertuberatedPos
 end
 
 def planetHelioEquatorialOn(orbital, name, day)
   pos = planetHelioEclipticOn(orbital, name, day)
   ecl = 23.4393 - "3.563E-7".to_f * day
+  
   pos[:xh] = pos[:xh]
   pos[:yh] = pos[:yh] * Math::cos(ecl) - pos[:zh] * Math::sin(ecl)
   pos[:zh] = pos[:yh] * Math::sin(ecl) + pos[:zh] * Math::cos(ecl)

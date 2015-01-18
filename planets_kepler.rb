@@ -1,4 +1,6 @@
-class Planets
+require_relative 'planet_simulator'
+
+class PlanetsKepler < PlanetSimulator
 private
   refd = -3543.0
   refDate = "19 april 1990"
@@ -279,7 +281,7 @@ public
     return orbitals
   end
 
-  def self.getPlanetList
+  def getPlanetList
     @@orbitals.keys
   end
   #http://www.stjarnhimlen.se/comp/ppcomp.html

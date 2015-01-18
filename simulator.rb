@@ -76,7 +76,7 @@ class Renderer
 
     #gl_Position = projection * camera * model * vec4(vert, 1);# evaluate from RtoL
   
-  def drawSphere(pos, name)
+  def drawSphere(data, name)
     no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
     mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
     mat_ambient_color = [ 0.8, 0.8, 0.2, 1.0 ]
@@ -89,8 +89,9 @@ class Renderer
 
     glBindTexture(GL_TEXTURE_2D, @planets[name])
     glPushMatrix()
-    @spheres[name] = createSphere( pos[:size]) unless @spheres.has_key?(name)
-    glTranslate(pos[:x], pos[:y], pos[:z])
+    @spheres[name] = createSphere( data[:size]) unless @spheres.has_key?(name)
+
+    glTranslate(*data[:pos])
     glCallList(@spheres[name])    
     glPopMatrix()
     

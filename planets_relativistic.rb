@@ -128,7 +128,7 @@ ORBITALS = {
       pos = orb[:pos] / 1e+10
       @paths[name].push(pos)
 
-      memo[name] = {x: pos[0],y: pos[1],z: pos[2], size: orb[:size]};
+      memo[name] = {pos: pos, size: orb[:size]};
       memo
     end
   end

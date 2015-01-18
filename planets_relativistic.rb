@@ -80,54 +80,48 @@ ORBITALS = {
       orb[:vel] = Vector.[](*state[3..5]) * AU / Day
       orb[:size] = orb[:size].to_f / 1e+1 if name == :sun
     end
-    
+
+    @paths={}
+    ORBITALS.each_key{|k| @paths[k]=[]}
+
     puts "done"
   end
   
   def twoBodyAttractionForce(orb1, orb2)
     diff =orb2[:pos]-orb1[:pos]
     abs = diff.norm
-
-    #F=m*a, a=F/m, forcev = G*orb2[:mass]*orb1[:mass]*(diff/abs)
-    #accel  = (not abs == 0)? G*orb2[:mass]*(diff/abs) : Vector[0,0,0]
-    #distance = (orb2[:pos]-orb1[:pos]).norm
-    #puts "distance: #{distance}"
-    #accel = (distance == 0)? Vector[0,0,0] : diff*G*orb2[:mass]/distance**2
     force =  (abs != 0)? orb2[:mass]*(diff/abs**3) : Vector[0,0,0]
   end
 
-  def moveOneBody(orb1,orb2,delta_t)
-    #move body
-    #pos = orb1[:pos] + orb1[:vel]*delta_t #delta_t in days, vel in AU/d 
-    #attract body
-    #    totalAttraction = ORBITALS.inject(Vector[0,0,0]){|memo, (name,orb2)| memo+twoBodyAttraction(orb1,orb2) }
-    #totalAttraction = twoBodyAttraction(orb1, ORBITALS[:sun])
-    forces = ORBITALS.collect do| (name,orb2)|  twoBodyAttractionForce(orb1,orb2) end
-    sum = Vector[0,0,0]
-    forces.each{|x| sum+=x}
+  def updatePosition(orb1, delta_t)
+    forces = ORBITALS.inject(Vector[0,0,0]){|memo, (name,orb2)| memo+twoBodyAttractionForce(orb1,orb2)}
       
-    totalForce =G*orb1[:mass] * sum
-    accel = totalForce / orb1[:mass]
+#    totalForce =G*orb1[:mass] * forces
+#    accel = totalForce / orb1[:mass]
 
-    speed = orb1[:vel]+accel*delta_t
-    orb1[:vel] = speed
-    pos = orb1[:pos] + speed*delta_t
+    accel = G*  forces
+    velocity = orb1[:vel]+accel*delta_t
+    orb1[:vel] = velocity
+    pos = orb1[:pos] + velocity*delta_t
 
     return pos 
   end
 
   
   def getPaths
-    
+    @paths
   end
   
   def simulateOneStep(delta_t)
     delta_t *= Day
     
-    ORBITALS.each{|name, orb| orb[:pos] = moveOneBody(orb, ORBITALS[:sun],delta_t) }
-    
+    ORBITALS.each{|name, orb| orb[:pos]  = updatePosition(orb, delta_t) }
+
+    #filter output information
     return ORBITALS.inject({}) do|memo, (name,orb)|
-      pos = orb[:pos] / 1e+11
+      pos = orb[:pos] / AU
+      @paths[name].push(pos)
+
       memo[name] = {x: pos[0],y: pos[1],z: pos[2], size: orb[:size]};
       memo
     end

@@ -1,8 +1,13 @@
- 
+
+require "matrix"
+
 require_relative 'planet_simulator'
 #cartesian state vectors
 #from NASA Horizons ephemeris database
 #date of 28-01-2015
+# units: mass:kg size:km state:AU/d
+
+class PlanetsRelativistic < PlanetSimulator
 ORBITALS = {
   sun: {
     mass: 1.988544e+30,
@@ -23,7 +28,12 @@ ORBITALS = {
     mass: 5.97219e+24,
     size: 6378.14,
     state: [-4.489079145002344E-01,  8.731839958634132E-01, -1.688204679979873E-04, -1.556616570859346E-02, -7.960372562529740E-03,  1.851675964089028E-08],
-  },         
+  },
+  moon: {
+    mass: 734.9e+20,
+    size: 1737.53,
+    state: [-4.492295947663176E-01,  8.707279819223681E-01,  3.532397583977436E-05, -1.495617961331058E-02, -8.000806015456890E-03,  1.571677110616910E-05,],
+  },        
   mars: {
     mass: 6.4185e+23,
     size: 3389.9,
@@ -55,21 +65,51 @@ ORBITALS = {
     state: [ 7.453060957291160E+00, -3.191868512209607E+01,  1.259619224615070E+00,  3.109684526995636E-03,  6.345743444144480E-05, -9.099546568174587E-04,]
   },
 }
-class PlanetsRelativistic < PlanetSimulator
-  public  
-  def planetHelioEclipticOn(orbital, name, day)
-    raise NotImplementedException
+
+  G = 6.673e-11
+  AU = 1.5e+11 #m 1.5e+8 #km
+  Day = 24*3600 #s
+
+  
+  public
+  def initialize
+    print "prepare orbital data ..."
+    ORBITALS.each do |name, orb|
+      state = orb[:state]
+      orb[:pos] = Vector.[](*state[0..2])
+      orb[:vel] = Vector.[](*state[3..5])
+    end
+    puts "done"
+  end
+  
+  def twoBodyAttraction(orb1, orb2)
+    diff =orb2[:pos]-orb1[:pos]
+    abs = (orb2[:pos]-orb1[:pos]).norm**3
+
+    #F=m*a, a=F/m, forcev = G*orb2[:mass]*orb1[:mass]*(diff/abs)
+    accel  = (not abs == 0)? G*orb2[:mass]*(diff/abs) / 1e+20 : Vector[0,0,0]
   end
 
-  def planetHelioEquatorialOn(orbital, name, day)
-    raise NotImplementedException
+  def moveOneBody(orb1,delta_t)
+    #move body
+    pos = orb1[:pos] + orb1[:vel]*delta_t #delta_t in days, vel in AU/d 
+    #attract body
+    totalAttraction = ORBITALS.inject(Vector[0,0,0]){|memo, (name,orb2)| memo+twoBodyAttraction(orb1,orb2) }
+    pos += totalAttraction * delta_t**2
+    return pos
   end
+
+  
   def getPaths
     
   end
   
   def simulateOneStep(delta_t)
-    return ORBITALS.inject({}){|memo, (name,orb)| memo[name] = {x: orb[:state][0],y: orb[:state][1],z: orb[:state][2], size: orb[:size]}; memo}
+
+    ORBITALS.each{|name, orb| orb[:pos] = moveOneBody(orb, delta_t)}
+    
+    return ORBITALS.inject({}){|memo, (name,orb)| memo[name] =
+                               {x: orb[:pos][0],y: orb[:pos][1],z: orb[:pos][2], size: orb[:size]}; memo}
   end
 
   def getPlanetList

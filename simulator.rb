@@ -14,7 +14,8 @@ include Gl
 include Glu
 include Glut
 
-require_relative 'planets'
+require_relative 'planets_kepler'
+require_relative 'planets_relativistic'
 require_relative 'assets'
 
 class Renderer
@@ -30,12 +31,12 @@ class Renderer
     state={}
     state[:orbitals] = @simulator.simulateOneStep(delta_t)
     state[:paths] = @simulator.getPaths if @drawPath
-
+    puts state[:orbitals][:earth].inspect
     return state
   end
 
   def simulatorInit
-    @simulator = Planets.new
+    @simulator = PlanetsRelativistic.new
     @drawPath = true
   end
   ################## drawing ############################
@@ -121,7 +122,7 @@ class Renderer
       when :orbitals
         data.each{|name,pos| drawSphere(pos, name) }
       when :paths
-        data.each{|el| drawPath(el)}
+        data.each{|el| drawPath(el)} unless data.nil?
       end
     end
     glPopMatrix
@@ -240,7 +241,7 @@ class Renderer
     @planets = {}
     puts "max textures: #{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS}"
     
-    planets = Planets.getPlanetList
+    planets = @simulator.getPlanetList
     textureIds = glGenTextures(planets.length)
     planets.each do |name|
       @planets[name] = textureIds.shift
@@ -254,9 +255,9 @@ class Renderer
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.to_rgba_stream)
-      print " mipmap .."
+      #print " mipmap .."
       # And create 2d mipmaps for the minifying function
-      gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, image.width, image.height, GL_RGBA, GL_UNSIGNED_BYTE, image.to_rgba_stream)
+      #gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, image.width, image.height, GL_RGBA, GL_UNSIGNED_BYTE, image.to_rgba_stream)
       puts " done"
     end
 

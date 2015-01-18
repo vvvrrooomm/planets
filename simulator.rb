@@ -117,11 +117,15 @@ class Renderer
     glPushMatrix
     glLoadIdentity()
 #camera matrix
-    glTranslate(*@cameraTrans)
-    glRotatef(-@cameraRot[2], 0.0, 0.0, 1.0)
-    glRotatef(-@cameraRot[1], 0.0, 1.0, 0.0)
-    glRotatef(-@cameraRot[0], 1.0, 0.0, 0.0)
-
+      glTranslate(*@cameraTrans)
+      glRotatef(-@cameraRot[2], 0.0, 0.0, 1.0)
+      glRotatef(-@cameraRot[1], 0.0, 1.0, 0.0)
+      glRotatef(-@cameraRot[0], 1.0, 0.0, 0.0)
+      if not @follow.nil?
+        follow = -1 *state[:orbitals][@follow][:pos] 
+      glTranslate(*follow)
+    end
+    
 #object matrix done in render function
     state.each do |name, data|
       case name
@@ -214,6 +218,26 @@ class Renderer
         cameraRotate(:zoomIn)
       when Glfw::KEY_MINUS, Glfw::KEY_SLASH, Glfw::KEY_KP_SUBTRACT
         cameraRotate(:zoomOut)
+      when Glfw::KEY_R
+        @follow = :mercury
+      when Glfw::KEY_V
+        @follow = :venus
+      when Glfw::KEY_E
+        @follow = :earth
+      when Glfw::KEY_M
+        @follow = :mars
+      when Glfw::KEY_J
+        @follow = :jupiter
+      when Glfw::KEY_S
+        @follow = :saturn
+      when Glfw::KEY_U
+        @follow = :uranus
+      when Glfw::KEY_N
+        @follow = :neptune
+      when Glfw::KEY_P
+        @follow = :pluto
+      when Glfw::KEY_BACKSPACE
+        @follow = nil
       when Glfw::KEY_P
         @drawPath = !@drawPath
       when Glfw::KEY_ENTER

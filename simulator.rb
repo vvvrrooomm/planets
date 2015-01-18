@@ -54,6 +54,22 @@ class Renderer
   HOME = [0.0, 0.0, -50.0]
   Nullvector = [0.0, 0.0, 0.0]
 
+  def createSphere( size)
+    sphere = gluNewQuadric();
+    gluQuadricDrawStyle(sphere, GLU_FILL);
+    gluQuadricTexture(sphere, TRUE);
+    gluQuadricNormals(sphere, GLU_SMOOTH);
+    #Making a display list
+    list = glGenLists(1);
+    glNewList(list, GL_COMPILE);
+    gluSphere(sphere, size/50000.to_f, 106, 106);
+    glEndList();
+    gluDeleteQuadric(sphere);
+    return list
+  end
+
+    #gl_Position = projection * camera * model * vec4(vert, 1);# evaluate from RtoL
+  
   def drawSphere(pos, name)
     no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
     mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
@@ -65,14 +81,13 @@ class Renderer
     high_shininess = [ 100.0 ]
     mat_emission = [0.3, 0.2, 0.2, 0.0]
 
-    glBindTexture( GL_TEXTURE_2D, @planets[name])
-    glMatrixMode(GL_MODELVIEW)
-    
+    glBindTexture(GL_TEXTURE_2D, @planets[name])
     glPushMatrix()
+    @spheres[name] = createSphere( pos[:size]) unless @spheres.has_key?(name)
     glTranslate(pos[:x], pos[:y], pos[:z])
-    #gl_Position = projection * camera * model * vec4(vert, 1);# evaluate from RtoL
-    glutSolidSphere(pos[:size]/50000.to_f, 106, 106)
+    glCallList(@spheres[name])    
     glPopMatrix()
+    
   end
 
   def drawPath(path)
@@ -224,6 +239,7 @@ class Renderer
   def initTextures
     @planets = {}
     puts "max textures: #{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS}"
+    
     planets = Planets.getPlanetList
     textureIds = glGenTextures(planets.length)
     planets.each do |name|
@@ -237,11 +253,14 @@ class Renderer
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.to_rgba_stream)
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.to_rgba_stream)
+      print " mipmap .."
+      # And create 2d mipmaps for the minifying function
+      gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, image.width, image.height, GL_RGBA, GL_UNSIGNED_BYTE, image.to_rgba_stream)
       puts " done"
     end
 
-    glEnable (GL_TEXTURE_2D) 
+    glEnable(GL_TEXTURE_2D) 
   end
   
   def initialize
@@ -263,6 +282,7 @@ class Renderer
 
     simulatorInit
 
+    @spheres = {}
     @cameraRot = []
     @cameraRot.replace Nullvector
     @cameraTrans = []

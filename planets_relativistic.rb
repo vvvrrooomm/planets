@@ -67,7 +67,7 @@ ORBITALS = {
 }
 
   G = 6.673e-11
-  AU = 1.5e+11 #m 1.5e+8 #km
+  AU = 1.4959787e+11 #m 1.5e+8 #km
   Day = 24*3600 #s
 
   
@@ -76,27 +76,44 @@ ORBITALS = {
     print "prepare orbital data ..."
     ORBITALS.each do |name, orb|
       state = orb[:state]
-      orb[:pos] = Vector.[](*state[0..2])
-      orb[:vel] = Vector.[](*state[3..5])
+      orb[:pos] = Vector.[](*state[0..2]) * AU 
+      orb[:vel] = Vector.[](*state[3..5]) * AU / Day
+      orb[:size] = orb[:size].to_f / 1e+1 if name == :sun
     end
+    
     puts "done"
   end
   
-  def twoBodyAttraction(orb1, orb2)
+  def twoBodyAttractionForce(orb1, orb2)
     diff =orb2[:pos]-orb1[:pos]
-    abs = (orb2[:pos]-orb1[:pos]).norm**3
+    abs = diff.norm
 
     #F=m*a, a=F/m, forcev = G*orb2[:mass]*orb1[:mass]*(diff/abs)
-    accel  = (not abs == 0)? G*orb2[:mass]*(diff/abs) / 1e+20 : Vector[0,0,0]
+    #accel  = (not abs == 0)? G*orb2[:mass]*(diff/abs) : Vector[0,0,0]
+    #distance = (orb2[:pos]-orb1[:pos]).norm
+    #puts "distance: #{distance}"
+    #accel = (distance == 0)? Vector[0,0,0] : diff*G*orb2[:mass]/distance**2
+    force =  (abs != 0)? orb2[:mass]*(diff/abs**3) : Vector[0,0,0]
   end
 
-  def moveOneBody(orb1,delta_t)
+  def moveOneBody(orb1,orb2,delta_t)
     #move body
-    pos = orb1[:pos] + orb1[:vel]*delta_t #delta_t in days, vel in AU/d 
+    #pos = orb1[:pos] + orb1[:vel]*delta_t #delta_t in days, vel in AU/d 
     #attract body
-    totalAttraction = ORBITALS.inject(Vector[0,0,0]){|memo, (name,orb2)| memo+twoBodyAttraction(orb1,orb2) }
-    pos += totalAttraction * delta_t**2
-    return pos
+    #    totalAttraction = ORBITALS.inject(Vector[0,0,0]){|memo, (name,orb2)| memo+twoBodyAttraction(orb1,orb2) }
+    #totalAttraction = twoBodyAttraction(orb1, ORBITALS[:sun])
+    forces = ORBITALS.collect do| (name,orb2)|  twoBodyAttractionForce(orb1,orb2) end
+    sum = Vector[0,0,0]
+    forces.each{|x| sum+=x}
+      
+    totalForce =G*orb1[:mass] * sum
+    accel = totalForce / orb1[:mass]
+
+    speed = orb1[:vel]+accel*delta_t
+    orb1[:vel] = speed
+    pos = orb1[:pos] + speed*delta_t
+
+    return pos 
   end
 
   
@@ -105,11 +122,15 @@ ORBITALS = {
   end
   
   def simulateOneStep(delta_t)
-
-    ORBITALS.each{|name, orb| orb[:pos] = moveOneBody(orb, delta_t)}
+    delta_t *= Day
     
-    return ORBITALS.inject({}){|memo, (name,orb)| memo[name] =
-                               {x: orb[:pos][0],y: orb[:pos][1],z: orb[:pos][2], size: orb[:size]}; memo}
+    ORBITALS.each{|name, orb| orb[:pos] = moveOneBody(orb, ORBITALS[:sun],delta_t) }
+    
+    return ORBITALS.inject({}) do|memo, (name,orb)|
+      pos = orb[:pos] / 1e+11
+      memo[name] = {x: pos[0],y: pos[1],z: pos[2], size: orb[:size]};
+      memo
+    end
   end
 
   def getPlanetList

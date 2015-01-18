@@ -31,7 +31,7 @@ class Renderer
     state={}
     state[:orbitals] = @simulator.simulateOneStep(delta_t)
     state[:paths] = @simulator.getPaths if @drawPath
-    puts state[:orbitals][:earth].inspect
+#    puts state[:orbitals][:earth].inspect
     return state
   end
 
@@ -227,7 +227,7 @@ class Renderer
       state = simulateOneStep(delta_t)
       drawNewState(window, state)
 
-      delta_t += 1
+      
       window.swap_buffers
       break if window.should_close?
     end

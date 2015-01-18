@@ -38,6 +38,7 @@ class Renderer
   def simulatorInit
     @simulator = PlanetsRelativistic.new
     @drawPath = true
+    @simulationPaused = true
   end
   ################## drawing ############################
 
@@ -213,6 +214,8 @@ class Renderer
         cameraRotate(:zoomOut)
       when Glfw::KEY_P
         @drawPath = !@drawPath
+      when Glfw::KEY_SPACE
+        @simulationPaused = !@simulationPaused
       when Glfw::KEY_ESCAPE
       #empty to suppress unknown key message
       else
@@ -227,10 +230,11 @@ class Renderer
     loop do
       Glfw.poll_events
       handleKeys(keyQueue)
+      delta_t = 1 if !@simulationPaused
+      delta_t = 0 if @simulationPaused
       state = simulateOneStep(delta_t)
       drawNewState(window, state)
 
-      
       window.swap_buffers
       break if window.should_close?
     end

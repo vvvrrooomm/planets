@@ -1,5 +1,6 @@
 =====ToDo====
 
+* topocentric view. specify place on earth
 * switch to OpenGL 3 and vertex shaders
 * setup uv vectors for textures
 * add planets rotation

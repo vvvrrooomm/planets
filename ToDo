@@ -2,8 +2,6 @@
 
 * topocentric view. specify place on earth
 * switch to OpenGL 3 and vertex shaders
-* setup uv vectors for textures
-* add planets rotation
 * add rings. textures are available, no idea how to use 
 * add more moons
 * add particle cloud for ... particle cloud
@@ -12,3 +10,7 @@
 * mouse move & free flight camera
 * change fov when zoom changes
 * find scale factor to nicely diplay planets
+
+===== DONE ====
+* add planets rotation
+* setup uv vectors for textures

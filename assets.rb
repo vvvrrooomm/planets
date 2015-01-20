@@ -11,6 +11,7 @@ module Assets
     sun: "sunmap.png",
     uranus: "uranusmap.png",
     venus: "venusbump.png",
+    polarAxis: "polaraxis.png",
   }
 
   HEIGHTMAPS = {

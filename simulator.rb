@@ -65,11 +65,21 @@ class Renderer
     gluQuadricDrawStyle(sphere, GLU_FILL);
     gluQuadricTexture(sphere, TRUE);
     gluQuadricNormals(sphere, GLU_SMOOTH);
+
+    axis = gluNewQuadric();
+    gluQuadricTexture(axis, TRUE);
     #Making a display list
     list = glGenLists(1);
     glNewList(list, GL_COMPILE);
     gluSphere(sphere, size/50000.to_f, 106, 106);
+
+    axisRad = size/50000.to_f * 0.05
+    axisLen = size*2/50000.to_f*1.20
+    glTranslate(0, 0, -axisLen/2)
+    glBindTexture(GL_TEXTURE_2D, @planets[:polarAxis])
+    gluCylinder(axis, axisRad, axisRad, axisLen, 32,32);
     glEndList();
+    gluDeleteQuadric(axis)
     gluDeleteQuadric(sphere);
     return list
   end
@@ -92,6 +102,9 @@ class Renderer
     @spheres[name] = createSphere( data[:size]) unless @spheres.has_key?(name)
 
     glTranslate(*data[:pos])
+
+    glRotatef(data[:obl], 0, 1, 0) #tilt of planets axis
+    glRotatef(data[:rot], 0, 0, 1) #planet's revolution
     glCallList(@spheres[name])    
     glPopMatrix()
     
@@ -279,6 +292,7 @@ class Renderer
     puts "max textures: #{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS}"
     
     planets = @simulator.getPlanetList
+    planets.push(:polarAxis)
     textureIds = glGenTextures(planets.length)
     planets.each do |name|
       @planets[name] = textureIds.shift

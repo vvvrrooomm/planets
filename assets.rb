@@ -12,8 +12,13 @@ module Assets
     uranus: "uranusmap.png",
     venus: "venusbump.png",
     polarAxis: "polaraxis.png",
+    saturnRings: "saturnringcolor.png",
   }
 
+  TRANSPARENCY = {
+    saturnRings: "saturnringpattern.gif",
+  }
+  
   HEIGHTMAPS = {
     earth: "earthmap1k.png",
     jupiter: "jupitermap.png",

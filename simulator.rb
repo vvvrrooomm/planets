@@ -59,7 +59,8 @@ class Renderer
 
   HOME = [0.0, 0.0, -50.0]
   Nullvector = [0.0, 0.0, 0.0]
-
+  ScaleFactor = 50000.0
+  
   def createSphere( size)
     sphere = gluNewQuadric();
     gluQuadricDrawStyle(sphere, GLU_FILL);
@@ -71,10 +72,10 @@ class Renderer
     #Making a display list
     list = glGenLists(1);
     glNewList(list, GL_COMPILE);
-    gluSphere(sphere, size/50000.to_f, 106, 106);
+    gluSphere(sphere, size/ScaleFactor, 106, 106);
 
-    axisRad = size/50000.to_f * 0.05
-    axisLen = size*2/50000.to_f*1.20
+    axisRad = size/ScaleFactor * 0.05
+    axisLen = size*2/ScaleFactor*1.20
     glTranslate(0, 0, -axisLen/2)
     glBindTexture(GL_TEXTURE_2D, @planets[:polarAxis])
     gluCylinder(axis, axisRad, axisRad, axisLen, 32,32);
@@ -102,7 +103,6 @@ class Renderer
     @spheres[name] = createSphere( data[:size]) unless @spheres.has_key?(name)
 
     glTranslate(*data[:pos])
-
     glRotatef(data[:obl], 0, 1, 0) #tilt of planets axis
     glRotatef(data[:rot], 0, 0, 1) #planet's revolution
     glCallList(@spheres[name])    
@@ -119,7 +119,43 @@ class Renderer
     end
     glEnd
   end
+
+  def createRings(size)
+    #wikipedia says saturn equatorial radius=60.300km, rings extend from 7000km to 80.000km
+    inner = 7000 / ScaleFactor
+    outer = 80000 / ScaleFactor
+    disk = gluNewQuadric()
+    gluQuadricDrawStyle(disk, GLU_FILL);
+    gluQuadricTexture(disk, TRUE);
+    gluQuadricNormals(disk, GLU_SMOOTH);
+
+    list = glGenLists(1);
+    glNewList(list, GL_COMPILE);
+    glBindTexture(GL_TEXTURE_2D, @planets[:saturnRings])
+    gluDisk(disk, inner, outer, 36, 32)
+    glTexCoord2f(0.0, 0.0); glVertex2d(0, 0);
+    glTexCoord2f(0.0, 1.0); glVertex2d(228,0);
+    glTexCoord2f(1.0, 1.0); glVertex2d(228, 63);
+    glTexCoord2f(1.0, 0.0); glVertex2d(0, 63);
+    glEndList();
+   
+    gluDeleteQuadric(disk);
+    return list
+  end
+  
+  def drawSaturnRings(data)
+    @spheres[:saturnRings] = createRings(data[:size]) unless @spheres.has_key?(:saturnRings)
+
+    glBindTexture(GL_TEXTURE_2D, @planets[:saturnRings])
+    glPushMatrix()
+
+    glTranslate(*data[:pos])
+    glRotatef(data[:obl], 0, 1, 0) #tilt of planets axis
+    glRotatef(data[:rot], 0, 0, 1) #planet's revolution
+    glCallList(@spheres[:saturnRings])    
+    glPopMatrix()
     
+  end
   
   def drawNewState(window,state)
     w, h = window.framebuffer_size()
@@ -148,6 +184,7 @@ class Renderer
         data.each{|el| drawPath(el)} unless data.nil?
       end
     end
+    drawSaturnRings(state[:orbitals][:saturn])
     glPopMatrix
   end
   
@@ -293,6 +330,7 @@ class Renderer
     
     planets = @simulator.getPlanetList
     planets.push(:polarAxis)
+    planets.push(:saturnRings)
     textureIds = glGenTextures(planets.length)
     planets.each do |name|
       @planets[name] = textureIds.shift

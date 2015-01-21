@@ -87,29 +87,6 @@ class Renderer
 
     #gl_Position = projection * camera * model * vec4(vert, 1);# evaluate from RtoL
   
-  def drawSphere(data, name)
-    no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
-    mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
-    mat_ambient_color = [ 0.8, 0.8, 0.2, 1.0 ]
-    mat_diffuse = [ 0.1, 0.5, 0.8, 1.0 ]
-    mat_specular = [ 0.10, 0.10, 0.10, 1.0 ]
-    no_shininess = [ 0.0 ]
-    low_shininess = [ 5.0 ]
-    high_shininess = [ 100.0 ]
-    mat_emission = [0.3, 0.2, 0.2, 0.0]
-
-    glBindTexture(GL_TEXTURE_2D, @planets[name])
-    glPushMatrix()
-    @spheres[name] = createSphere( data[:size]) unless @spheres.has_key?(name)
-
-    glTranslate(*data[:pos])
-    glRotatef(data[:obl], 0, 1, 0) #tilt of planets axis
-    glRotatef(data[:rot], 0, 0, 1) #planet's revolution
-    glCallList(@spheres[name])    
-    glPopMatrix()
-    
-  end
-
   def drawPath(path)
     color = @@colors[path[0]]
     glBegin GL_LINES
@@ -167,11 +144,13 @@ class Renderer
       inn1=inn2
       inn2 = innerIter.next
       #triangle1: o1, o2, i1
+      glNormal(0, 0, 1)
       glTexCoord(0.0, 1.0); glVertex2f(*out1)
       glTexCoord(0.0, 0.0); glVertex2f(*out2)
       glTexCoord(1.0, 1.0); glVertex2f(*inn1)
       
       #triangle2: o2, i2, i1
+      glNormal(0, 0, 1)
       glTexCoord(0.0, 0.0); glVertex2f(*out2)
       glTexCoord(1.0, 1.0); glVertex2f(*inn2)
       glTexCoord(1.0, 0.0); glVertex2f(*inn1)
@@ -196,7 +175,30 @@ class Renderer
     glPopMatrix()
     glDisable(GL_BLEND);
   end
-  
+
+  def drawSphere(data, name)
+    no_mat = [ 0.0, 0.0, 0.0, 1.0 ]
+    mat_ambient = [ 0.7, 0.7, 0.7, 1.0 ]
+    mat_ambient_color = [ 0.8, 0.8, 0.2, 1.0 ]
+    mat_diffuse = [ 0.1, 0.5, 0.8, 1.0 ]
+    mat_specular = [ 0.10, 0.10, 0.10, 1.0 ]
+    no_shininess = [ 0.0 ]
+    low_shininess = [ 5.0 ]
+    high_shininess = [ 100.0 ]
+    mat_emission = [0.3, 0.2, 0.2, 0.0]
+
+    glBindTexture(GL_TEXTURE_2D, @planets[name])
+    glPushMatrix()
+    @spheres[name] = createSphere( data[:size]) unless @spheres.has_key?(name)
+
+    glTranslate(*data[:pos])
+    glRotatef(data[:obl], 0, 1, 0) #tilt of planets axis
+    glRotatef(data[:rot], 0, 0, 1) #planet's revolution
+    glCallList(@spheres[name])    
+    glPopMatrix()
+    
+  end
+
   def drawNewState(window,state)
     w, h = window.framebuffer_size()
     Gl.glViewport(0, 0, w, h)

@@ -2,7 +2,6 @@
 
 * topocentric view. specify place on earth
 * switch to OpenGL 3 and vertex shaders
-* add rings. textures are available, no idea how to use 
 * add more moons
 * add particle cloud for ... particle cloud
 * add scenegraph and only render visible things
@@ -14,3 +13,4 @@
 ===== DONE ====
 * add planets rotation
 * setup uv vectors for textures
+* add rings. textures are available, no idea how to use 

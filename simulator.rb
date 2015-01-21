@@ -120,26 +120,64 @@ class Renderer
     glEnd
   end
 
+  def calculateCircle(r, num_segments)
+    theta = 2 * 3.1415926 / (num_segments);
+    tangetial_factor = Math.tan(theta);#calculate the tangential factor
+    radial_factor = Math.cos(theta);#calculate the radial factor
+
+    x = r;#we start at angle = 0
+    y = 0;
+    result= []
+    for i in 0..num_segments do
+      result.push([x,y])
+
+      #calculate the tangential vector
+      #remember, the radial vector is (x, y)
+      #to get the tangential vector we flip those coordinates and negate one of them
+      tx = -y;
+      ty = x;
+
+      #add the tangential vector
+      x += tx * tangetial_factor;
+      y += ty * tangetial_factor;
+
+      #correct using the radial factor
+      x *= radial_factor;
+      y *= radial_factor;
+    end
+    return result
+  end
+
+  
   def createRings(size)
     #wikipedia says saturn equatorial radius=60.300km, rings extend from 7000km to 80.000km
-    inner = 7000 / ScaleFactor
-    outer = 80000 / ScaleFactor
-    disk = gluNewQuadric()
-    gluQuadricDrawStyle(disk, GLU_FILL);
-    gluQuadricTexture(disk, TRUE);
-    gluQuadricNormals(disk, GLU_SMOOTH);
+    inner = (7000+size) / ScaleFactor
+    outer = (80000+size) / ScaleFactor
 
     list = glGenLists(1);
     glNewList(list, GL_COMPILE);
-    glBindTexture(GL_TEXTURE_2D, @planets[:saturnRings])
-    gluDisk(disk, inner, outer, 36, 32)
-    glTexCoord2f(0.0, 0.0); glVertex2d(0, 0);
-    glTexCoord2f(0.0, 1.0); glVertex2d(228,0);
-    glTexCoord2f(1.0, 1.0); glVertex2d(228, 63);
-    glTexCoord2f(1.0, 0.0); glVertex2d(0, 63);
+    glBegin(GL_TRIANGLES)
+    outerIter = calculateCircle(outer, 128).each
+    innerIter = calculateCircle(inner, 128).each
+    out2 = outerIter.next
+    inn2 = innerIter.next
+    128.times do 
+      out1 = out2
+      out2 = outerIter.next
+      inn1=inn2
+      inn2 = innerIter.next
+      #triangle1: o1, o2, i1
+      glTexCoord(0.0, 1.0); glVertex2f(*out1)
+      glTexCoord(0.0, 0.0); glVertex2f(*out2)
+      glTexCoord(1.0, 1.0); glVertex2f(*inn1)
+      
+      #triangle2: o2, i2, i1
+      glTexCoord(0.0, 0.0); glVertex2f(*out2)
+      glTexCoord(1.0, 1.0); glVertex2f(*inn2)
+      glTexCoord(1.0, 0.0); glVertex2f(*inn1)
+    end
+    glEnd()
     glEndList();
-   
-    gluDeleteQuadric(disk);
     return list
   end
   

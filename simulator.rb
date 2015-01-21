@@ -330,7 +330,7 @@ class Renderer
         @follow = :pluto
       when Glfw::KEY_BACKSPACE
         @follow = nil
-      when Glfw::KEY_P
+      when Glfw::KEY_T
         @drawPath = !@drawPath
       when Glfw::KEY_ENTER
         @simulationPaused = !@simulationPaused

@@ -12,7 +12,7 @@ module Assets
     uranus: "uranusmap.png",
     venus: "venusbump.png",
     polarAxis: "polaraxis.png",
-    saturnRings: "saturnringcolor.png",
+    saturnRings: "saturnringalpha.png",
   }
 
   TRANSPARENCY = {

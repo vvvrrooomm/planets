@@ -183,6 +183,8 @@ class Renderer
   
   def drawSaturnRings(data)
     @spheres[:saturnRings] = createRings(data[:size]) unless @spheres.has_key?(:saturnRings)
+    glEnable (GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
     glBindTexture(GL_TEXTURE_2D, @planets[:saturnRings])
     glPushMatrix()
@@ -192,7 +194,7 @@ class Renderer
     glRotatef(data[:rot], 0, 0, 1) #planet's revolution
     glCallList(@spheres[:saturnRings])    
     glPopMatrix()
-    
+    glDisable(GL_BLEND);
   end
   
   def drawNewState(window,state)
@@ -270,7 +272,7 @@ class Renderer
 
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LESS)
-
+   
     glLight(GL_LIGHT0, GL_AMBIENT, ambient)
     glLight(GL_LIGHT0, GL_DIFFUSE, diffuse)
     glLight(GL_LIGHT0, GL_POSITION, position)
